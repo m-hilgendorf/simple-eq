@@ -2,19 +2,19 @@
 name = "simple-eq"
 description = "A simple audio equalizer"
 version = "0.1.0"
-authors = ["m-hilgendorf <mike@hilgendorf.audio>"]
+authors = ["Mike Hildendorf <mike@hilgendorf.audio>"]
 edition = "2018"
 license = "MIT" 
 
 [features]
-no-std = []
+no_std = []
 
 [dependencies]
-nalgebra = "0.20.0"
+nalgebra = "0.32"
 
 [dev-dependencies]
-criterion = "0.3.1"
-rand = "0.7.3"
+criterion = "0.5"
+rand = "0.8"
 
 [[bench]]
 name = "realtime"

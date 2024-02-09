@@ -1,9 +1,10 @@
+#![allow(clippy::just_underscores_and_digits)]
 //! Structures and methods for calculating filter coefficients from
 //! design parameters.
 //!
 
 use nalgebra::{convert as _c, Matrix3, RealField as Real, Vector3 as Vec3};
-use std::convert::From;
+use core::convert::From;
 
 #[derive(Copy, Clone, Debug)]
 pub enum Curve {
@@ -39,7 +40,7 @@ pub struct Design<R: Real> {
     pub gain: R,
 }
 
-impl<R: Real> Default for Design<R> {
+impl<R: Real + Copy> Default for Design<R> {
     fn default() -> Self {
         Self {
             curve: Curve::Peak,
@@ -50,7 +51,7 @@ impl<R: Real> Default for Design<R> {
     }
 }
 
-impl<R: Real> Design<R> {
+impl<R: Real + Copy> Design<R> {
     /// Compute the dgital transfer function.
     pub fn digital_xfer_fn(&self) -> (Vec3<R>, Vec3<R>) {
         let (a_num, a_den) = self.analog_xfer_fn();
@@ -59,7 +60,7 @@ impl<R: Real> Design<R> {
         (t_num / scale, t_den / scale)
     }
 
-    /// Compute the continuous time transfer function of the filter 
+    /// Compute the continuous time transfer function of the filter
     #[rustfmt::skip]
     pub fn analog_xfer_fn (&self) -> (Vec3<R>, Vec3<R>) {
         let omega_c = prewarp(self.frequency);
@@ -107,18 +108,18 @@ impl<R: Real> Design<R> {
 /// Normalize a frequency in Hertz (1/s) to its discrete time equivalent (1/samples) given
 /// the system's sample rate. Will panic if you try and normalize a frequency past Nyquist.
 #[inline]
-pub fn normalize_frequency<R: Real>(frequency: R, sample_rate: R) -> R {
+pub fn normalize_frequency<R: Real + Copy>(frequency: R, sample_rate: R) -> R {
     assert!(frequency < (sample_rate / _c(2.0)));
     frequency / sample_rate
 }
 
 #[inline]
-fn db2lin<R: Real>(db: R) -> R {
+fn db2lin<R: Real + Copy>(db: R) -> R {
     _c::<f64, R>(10.0).powf(db / _c(20.0))
 }
 
 #[inline]
-fn prewarp<R: Real>(normalized_freq: R) -> R {
+fn prewarp<R: Real + Copy>(normalized_freq: R) -> R {
     //let prewarped = 4.0 * (normalized_frequency * 0.5 * std::f64::consts::PI).tan();
     let (_4, _0_5, pi) = (_c::<f64, R>(4.0), _c::<f64, R>(0.5), R::pi());
     _4 * (normalized_freq * _0_5 * pi).tan()
@@ -127,7 +128,7 @@ fn prewarp<R: Real>(normalized_freq: R) -> R {
 #[inline] 
 #[allow(non_snake_case)]
 #[rustfmt::skip]
-fn trans_quad<R: Real>(Q: Vec3<R>) -> Vec3<R> {
+fn trans_quad<R: Real + Copy>(Q: Vec3<R>) -> Vec3<R> {
     let TQ: Vec3<R> = Vec3::new(
         _c::<f64, R> (1.0) * Q[0], 
         _c::<f64, R>(1.0 / 4.0) * Q[1], 

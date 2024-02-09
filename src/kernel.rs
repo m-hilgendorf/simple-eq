@@ -25,7 +25,7 @@ impl<R: Real> Default for Kernel<R> {
     }
 }
 
-impl<R: Real> Kernel<R> {
+impl<R: Real + Copy> Kernel<R> {
     /// Constuct a new filter kernel. Default's to pass-through
     pub fn new() -> Self {
         Self::default()
@@ -36,25 +36,18 @@ impl<R: Real> Kernel<R> {
         self.s = zero();
     }
 
-    /// set the coefficient matrices. 
+    /// set the coefficient matrices.
     pub fn set(&mut self, num: Vec3<R>, den: Vec3<R>) {
-        //let (b0, num[1], b2, den[1], den[2]) = (num[0], num[1], num[2], den[1], den[2]);
-        self.A = Mat2::new(
-            -den[1], one(), 
-            -den[2], zero(),
-        );
-        self.B = Vec2::new(
-            num[1] - den[1] * num[0],
-            num[2] - den[2] * num[0], 
-        ); 
+        self.A = Mat2::new(-den[1], one(), -den[2], zero());
+        self.B = Vec2::new(num[1] - den[1] * num[0], num[2] - den[2] * num[0]);
         self.C = Vec3::new(num[0], one(), zero());
     }
 
     /// Evaluate the kernel's transfer characteristics
     pub fn eval(&mut self, x: R) -> R {
-        let u   = Vec3::new(x, self.s[0], self.s[1]);
+        let u = Vec3::new(x, self.s[0], self.s[1]);
         let out = self.C.dot(&u);
-        self.s  = self.A * self.s + self.B * x;
+        self.s = self.A * self.s + self.B * x;
         out
     }
 }

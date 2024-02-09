@@ -1,3 +1,5 @@
+#![cfg_attr(feature = "no_std", no_std)]
+
 //! A simple 32 band audio equalizer
 //!
 //! Usage:
@@ -6,23 +8,23 @@
 //! use simple_eq::Equalizer;
 //! use simple_eq::design::Curve;
 //!
-//! fn main() {
-//!     // create an input signal, in our case a unit impulse.
-//!     let mut h = vec![0.0; 128];
-//!     h[0] = 1.0;
-//!     
-//!     // create the equalizer instance
-//!     let mut eq = Equalizer::new(48.0e3);
-//!     eq.set(0, Curve::Lowshelf, 100.0, 1.0, 6.0);
-//!     eq.set(1, Curve::Peak, 1000.0, 10.0, -12.0);
-//!     eq.set(2, Curve::Highpass, 5000.0, 0.5_f64.sqrt(), 3.0);
 //!
-//!     // process the signal
-//!     eq.process_buffer(&mut h);
-//!     
-//!     // print the impulse response:
-//!     println!("h = {:?};", h);
-//! }
+//! // create an input signal, in our case a unit impulse.
+//! let mut h = vec![0.0; 128];
+//! h[0] = 1.0;
+//!
+//! // create the equalizer instance
+//! let mut eq = Equalizer::new(48.0e3);
+//! eq.set(0, Curve::Lowshelf, 100.0, 1.0, 6.0);
+//! eq.set(1, Curve::Peak, 1000.0, 10.0, -12.0);
+//! eq.set(2, Curve::Highpass, 5000.0, 0.5_f64.sqrt(), 3.0);
+//
+//! // process the signal
+//! eq.process_buffer(&mut h);
+//!
+//! // print the impulse response:
+//! println!("h = {:?};", h);
+//!
 //! ```
 pub mod design;
 pub mod filter;
@@ -34,14 +36,14 @@ use design::*;
 use kernel::*;
 
 #[derive(Copy, Clone, Debug)]
-pub struct Equalizer<R: Real> {
+pub struct Equalizer<R: Real + Copy + Default> {
     design: [Design<R>; NUM_BANDS],
     kernel: [Kernel<R>; NUM_BANDS],
     bypass: [bool; NUM_BANDS],
     sample_rate: R,
 }
 
-impl<R: Real> Equalizer<R> {
+impl<R: Real + Default + Copy> Equalizer<R> {
     /// Construct a new [Equalizer] instance
     pub fn new(sample_rate: R) -> Self {
         Self {
@@ -168,19 +170,19 @@ mod test {
     #[test]
     fn doc() {
         // create an input signal, in our case a unit impulse.
-        let mut h = vec![0.0; 512];
+        let mut h = [0.0; 512];
         h[0] = 1.0;
-        
+
         // create the equalizer instance
         let mut eq = Equalizer::new(48.0e3);
         eq.set(0, Curve::Highpass, 100.0, 0.5f64.sqrt(), 0.0);
         eq.set(1, Curve::Peak, 1000.0, 10.0, -12.0);
-        eq.process_buffer(&mut h);     
+        eq.process_buffer(&mut h);
 
-        // print out the impulse response. 
-        println!("impulse = {:?};", h); 
+        // print out the impulse response.
+        println!("impulse = {:?};", h);
 
-        // we can bypass the lowest band 
+        // we can bypass the lowest band
         eq.set_bypass(0, true);
     }
 }

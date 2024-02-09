@@ -10,7 +10,7 @@ pub struct Filter<R: Real> {
     sample_rate: R,
 }
 
-impl<R: Real> Filter<R> {
+impl<R: Real + Copy> Filter<R> {
     /// Construct a new filter instance
     pub fn new(sample_rate: R) -> Self {
         let design = Design {
