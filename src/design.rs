@@ -3,8 +3,8 @@
 //! design parameters.
 //!
 
-use nalgebra::{convert as _c, Matrix3, RealField as Real, Vector3 as Vec3};
 use core::convert::From;
+use nalgebra::{convert as _c, Matrix3, RealField as Real, Vector3 as Vec3};
 
 #[derive(Copy, Clone, Debug)]
 pub enum Curve {

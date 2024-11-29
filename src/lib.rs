@@ -30,7 +30,7 @@ pub mod design;
 pub mod filter;
 pub mod kernel;
 
-use nalgebra::{convert as _c, RealField as Real};
+use nalgebra::RealField as Real;
 const NUM_BANDS: usize = 32;
 use design::*;
 use kernel::*;
@@ -75,7 +75,7 @@ impl<R: Real + Default + Copy> Equalizer<R> {
                 &mut self.design[idx],
                 &mut self.bypass[idx],
             );
-            let freq_hz: R = _c::<f64, R>(2.0) * self.sample_rate * d.frequency;
+            let freq_hz = self.sample_rate * d.frequency;
             d.frequency = normalize_frequency(freq_hz, sample_rate);
             self.sample_rate = sample_rate;
             let (num, den) = d.digital_xfer_fn();
