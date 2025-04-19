@@ -1,6 +1,6 @@
 use criterion::{Criterion, black_box, criterion_group, criterion_main};
 use rand::Rng;
-use simple_eq::design::Curve;
+use simple_eq::parameters::Curve;
 use simple_eq::*;
 
 fn exp_decay(n: usize) -> Vec<f32> {
