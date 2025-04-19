@@ -2,9 +2,8 @@
 //! Structures and methods for calculating filter coefficients from
 //! design parameters.
 //!
-
-use core::convert::From;
-use nalgebra::{convert as _c, Matrix3, RealField as Real, Vector3 as Vec3};
+use crate::math::*;
+use core::{convert::From, f32::consts::PI};
 
 #[derive(Copy, Clone, Debug)]
 pub enum Curve {
@@ -33,27 +32,27 @@ impl From<i32> for Curve {
 }
 
 #[derive(Copy, Clone, Debug)]
-pub struct Design<R: Real> {
+pub struct Design {
     pub curve: Curve,
-    pub frequency: R,
-    pub resonance: R,
-    pub gain: R,
+    pub frequency: f32,
+    pub resonance: f32,
+    pub gain: f32,
 }
 
-impl<R: Real + Copy> Default for Design<R> {
+impl Default for Design {
     fn default() -> Self {
         Self {
             curve: Curve::Peak,
-            frequency: _c(1.0 / 24.0),
-            resonance: _c(0.5f64.sqrt()),
-            gain: _c(0.0),
+            frequency: 1.0 / 24.0,
+            resonance: 0.5f32.sqrt(),
+            gain: 0.0,
         }
     }
 }
 
-impl<R: Real + Copy> Design<R> {
+impl Design {
     /// Compute the dgital transfer function.
-    pub fn digital_xfer_fn(&self) -> (Vec3<R>, Vec3<R>) {
+    pub fn digital_xfer_fn(&self) -> (Vec3, Vec3) {
         let (a_num, a_den) = self.analog_xfer_fn();
         let (t_num, t_den) = (trans_quad(a_num), trans_quad(a_den));
         let scale = t_den[0];
@@ -62,25 +61,25 @@ impl<R: Real + Copy> Design<R> {
 
     /// Compute the continuous time transfer function of the filter
     #[rustfmt::skip]
-    pub fn analog_xfer_fn (&self) -> (Vec3<R>, Vec3<R>) {
+    pub fn analog_xfer_fn (&self) -> (Vec3, Vec3) {
         let omega_c = prewarp(self.frequency);
         let scale   = db2lin(self.gain).sqrt();
-        let den     = [_c(1.0), omega_c / self.resonance, omega_c * omega_c];
+        let den     = [1.0, omega_c / self.resonance, omega_c * omega_c];
         let (num, den) = match self.curve {
             Curve::Lowpass  => {
-                ([_c(0.0), _c(0.0), omega_c * omega_c], den)
+                ([0.0, 0.0, omega_c * omega_c], den)
             },
-            Curve::Highpass => ([_c(1.0), _c(0.0), _c(0.0)], den),
-            Curve::Bandpass => ([_c(0.0), omega_c / self.resonance, _c(0.0)], den),
-            Curve::Notch    => ([_c(1.0), _c(0.0), omega_c * omega_c], den),
+            Curve::Highpass => ([1.0, 0.0, 0.0], den),
+            Curve::Bandpass => ([0.0, omega_c / self.resonance, 0.0], den),
+            Curve::Notch    => ([1.0, 0.0, omega_c * omega_c], den),
             Curve::Peak     => (
-                [_c(1.0), omega_c * scale / self.resonance, omega_c * omega_c],
-                [_c(1.0), omega_c / (self.resonance * scale), omega_c * omega_c],
+                [1.0, omega_c * scale / self.resonance, omega_c * omega_c],
+                [1.0, omega_c / (self.resonance * scale), omega_c * omega_c],
             ),
             Curve::Highshelf => {
                 let (mut num, mut den) = (
                     [scale, omega_c * scale.sqrt() / self.resonance, omega_c * omega_c],
-                    [_c(1.0), omega_c * scale.sqrt() / self.resonance, omega_c * omega_c * scale],
+                    [1.0, omega_c * scale.sqrt() / self.resonance, omega_c * omega_c * scale],
                 );
                 for i in 0..3 {
                     num[i] *= scale;
@@ -90,7 +89,7 @@ impl<R: Real + Copy> Design<R> {
             }
             Curve::Lowshelf => {
                 let (mut num, mut den) = (
-                    [_c(1.0), omega_c * scale.sqrt() / self.resonance, omega_c * omega_c * scale],
+                    [1.0, omega_c * scale.sqrt() / self.resonance, omega_c * omega_c * scale],
                     [scale, omega_c * scale.sqrt() / self.resonance, omega_c * omega_c],
                 );
                 for i in 0..3 {
@@ -108,36 +107,46 @@ impl<R: Real + Copy> Design<R> {
 /// Normalize a frequency in Hertz (1/s) to its discrete time equivalent (1/samples) given
 /// the system's sample rate. Will panic if you try and normalize a frequency past Nyquist.
 #[inline]
-pub fn normalize_frequency<R: Real + Copy>(frequency: R, sample_rate: R) -> R {
-    assert!(frequency < (sample_rate / _c(2.0)));
+pub fn normalize_frequency(frequency: f32, sample_rate: f32) -> f32 {
+    assert!(frequency < (sample_rate / 2.0));
     frequency / sample_rate
 }
 
 #[inline]
-fn db2lin<R: Real + Copy>(db: R) -> R {
-    _c::<f64, R>(10.0).powf(db / _c(20.0))
+fn db2lin(db: f32) -> f32 {
+    10.0f32.powf(db / 20.0)
 }
 
 #[inline]
-fn prewarp<R: Real + Copy>(normalized_freq: R) -> R {
-    //let prewarped = 4.0 * (normalized_frequency * 0.5 * std::f64::consts::PI).tan();
-    let (_4, _0_5, pi) = (_c::<f64, R>(4.0), _c::<f64, R>(0.5), R::pi());
-    _4 * (normalized_freq * _0_5 * pi).tan()
+fn prewarp(normalized_freq: f32) -> f32 {
+    4.0 * (normalized_freq * 0.5 * PI).tan()
 }
 
-#[inline] 
+#[inline]
 #[allow(non_snake_case)]
 #[rustfmt::skip]
-fn trans_quad<R: Real + Copy>(Q: Vec3<R>) -> Vec3<R> {
-    let TQ: Vec3<R> = Vec3::new(
-        _c::<f64, R> (1.0) * Q[0], 
-        _c::<f64, R>(1.0 / 4.0) * Q[1], 
-        _c::<f64, R>(1.0 / 16.0) * Q[2]
-    ); 
-    let X: Matrix3<R> = Matrix3::new(
-        _c(1.0), _c(1.0), _c(1.0), 
-        _c(-2.0), _c(0.0), _c(2.0),
-        _c(1.0), _c(-1.0), _c(1.0)
+fn trans_quad(Q: Vec3) -> Vec3 {
+    let TQ: Vec3 = Vec3::new(
+        1.0 * Q[0],
+        1.0 / 4.0 * Q[1],
+        1.0 / 16.0 * Q[2],
     );
-    X * TQ 
+    #[cfg(feature = "nalgebra")]
+    {
+        let X = Mat3::new(
+             1.0,  1.0, 1.0,
+            -2.0,  0.0, 2.0,
+             1.0, -1.0, 1.0,
+        );
+        X * TQ
+    }
+    #[cfg(feature = "glam")]
+    {
+        let X = Mat3::from_cols(
+            Vec3::new(1.0, -2.0, 1.0),
+            Vec3::new(1.0, 0.0, -1.0),
+            Vec3::new(1.0, 2.0, 1.0),
+        );
+        X * TQ
+    }
 }

@@ -1,4 +1,4 @@
-#![cfg_attr(feature = "no_std", no_std)]
+#![cfg_attr(not(feature = "std"), no_std)]
 
 //! A simple 32 band audio equalizer
 //!
@@ -17,7 +17,7 @@
 //! let mut eq = Equalizer::new(48.0e3);
 //! eq.set(0, Curve::Lowshelf, 100.0, 1.0, 6.0);
 //! eq.set(1, Curve::Peak, 1000.0, 10.0, -12.0);
-//! eq.set(2, Curve::Highpass, 5000.0, 0.5_f64.sqrt(), 3.0);
+//! eq.set(2, Curve::Highpass, 5000.0, 0.5_f32.sqrt(), 3.0);
 //
 //! // process the signal
 //! eq.process_buffer(&mut h);
@@ -29,23 +29,23 @@
 pub mod design;
 pub mod filter;
 pub mod kernel;
+pub mod math;
 
-use nalgebra::RealField as Real;
 const NUM_BANDS: usize = 32;
 use design::*;
 use kernel::*;
 
 #[derive(Copy, Clone, Debug)]
-pub struct Equalizer<R: Real + Copy + Default> {
-    design: [Design<R>; NUM_BANDS],
-    kernel: [Kernel<R>; NUM_BANDS],
+pub struct Equalizer {
+    design: [Design; NUM_BANDS],
+    kernel: [Kernel; NUM_BANDS],
     bypass: [bool; NUM_BANDS],
-    sample_rate: R,
+    sample_rate: f32,
 }
 
-impl<R: Real + Default + Copy> Equalizer<R> {
+impl Equalizer {
     /// Construct a new [Equalizer] instance
-    pub fn new(sample_rate: R) -> Self {
+    pub fn new(sample_rate: f32) -> Self {
         Self {
             design: [Design::default(); NUM_BANDS],
             kernel: [Kernel::default(); NUM_BANDS],
@@ -55,7 +55,7 @@ impl<R: Real + Default + Copy> Equalizer<R> {
     }
 
     #[inline]
-    pub fn set(&mut self, idx: usize, curve: Curve, frequency: R, resonance: R, gain: R) {
+    pub fn set(&mut self, idx: usize, curve: Curve, frequency: f32, resonance: f32, gain: f32) {
         self.design[idx] = Design {
             frequency: normalize_frequency(frequency, self.sample_rate),
             gain,
@@ -68,7 +68,7 @@ impl<R: Real + Default + Copy> Equalizer<R> {
 
     /// Change the sample rate of the instance
     #[inline]
-    pub fn set_sample_rate(&mut self, sample_rate: R) {
+    pub fn set_sample_rate(&mut self, sample_rate: f32) {
         for idx in 0..NUM_BANDS {
             let (k, d, _) = (
                 &mut self.kernel[idx],
@@ -100,21 +100,21 @@ impl<R: Real + Default + Copy> Equalizer<R> {
     /// Set the gain of a single band of the equalizer
     #[inline]
     #[allow(non_snake_case)]
-    pub fn set_gain(&mut self, idx: usize, gain_dB: R) {
+    pub fn set_gain(&mut self, idx: usize, gain_dB: f32) {
         self.design[idx].gain = gain_dB;
         self.update(idx);
     }
 
     /// Set the frequency of an individual band of the equalizer
     #[inline]
-    pub fn set_frequency(&mut self, idx: usize, freq_hz: R) {
+    pub fn set_frequency(&mut self, idx: usize, freq_hz: f32) {
         self.design[idx].frequency = normalize_frequency(freq_hz, self.sample_rate);
         self.update(idx);
     }
 
     /// Set the resonance/Q factor of a single band
     #[inline]
-    pub fn set_resonance(&mut self, idx: usize, resonance: R) {
+    pub fn set_resonance(&mut self, idx: usize, resonance: f32) {
         self.design[idx].resonance = resonance;
         self.update(idx);
     }
@@ -125,7 +125,7 @@ impl<R: Real + Default + Copy> Equalizer<R> {
         self.bypass[idx]
     }
 
-    /// Reset the state of all bands
+    /// f32eset the state of all bands
     pub fn reset(&mut self) {
         for k in self.kernel.iter_mut() {
             k.reset();
@@ -134,7 +134,7 @@ impl<R: Real + Default + Copy> Equalizer<R> {
 
     /// Gets the design of a single band. Note that the frequency parameter is
     /// in the units of normalized frequency (1/samples).
-    pub fn get_design(&self, idx: usize) -> Design<R> {
+    pub fn get_design(&self, idx: usize) -> Design {
         self.design[idx]
     }
 
@@ -147,7 +147,7 @@ impl<R: Real + Default + Copy> Equalizer<R> {
 
     /// Process a single sample of input
     #[inline]
-    pub fn process(&mut self, input: R) -> R {
+    pub fn process(&mut self, input: f32) -> f32 {
         self.kernel
             .iter_mut()
             .zip(self.bypass.iter())
@@ -156,7 +156,7 @@ impl<R: Real + Default + Copy> Equalizer<R> {
     }
 
     /// Process a buffer of input samples
-    pub fn process_buffer(&mut self, input: &mut [R]) {
+    pub fn process_buffer(&mut self, input: &mut [f32]) {
         for x in input {
             *x = self.process(*x);
         }
@@ -164,7 +164,7 @@ impl<R: Real + Default + Copy> Equalizer<R> {
 }
 
 #[cfg(test)]
-#[cfg(not(feature = "no-std"))]
+#[cfg(feature = "std")]
 mod test {
     use super::*;
     #[test]
@@ -175,7 +175,7 @@ mod test {
 
         // create the equalizer instance
         let mut eq = Equalizer::new(48.0e3);
-        eq.set(0, Curve::Highpass, 100.0, 0.5f64.sqrt(), 0.0);
+        eq.set(0, Curve::Highpass, 100.0, 0.5f32.sqrt(), 0.0);
         eq.set(1, Curve::Peak, 1000.0, 10.0, -12.0);
         eq.process_buffer(&mut h);
 

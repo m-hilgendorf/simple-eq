@@ -1,14 +1,14 @@
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use criterion::{Criterion, black_box, criterion_group, criterion_main};
 use rand::Rng;
 use simple_eq::design::Curve;
 use simple_eq::*;
 
-fn exp_decay(n: usize) -> Vec<f64> {
+fn exp_decay(n: usize) -> Vec<f32> {
     let mut rng = rand::thread_rng();
     black_box(
         (0..n)
-            .map(|n| n as f64)
-            .map(|a| a * rng.gen::<f64>())
+            .map(|n| n as f32)
+            .map(|a| a * rng.r#gen::<f32>())
             .collect(),
     )
 }

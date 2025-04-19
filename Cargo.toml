@@ -1,16 +1,18 @@
 [package]
 name = "simple-eq"
 description = "A simple audio equalizer"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Mike Hildendorf <mike@hilgendorf.audio>"]
-edition = "2018"
-license = "MIT" 
+edition = "2024"
+license = "MIT"
 
 [features]
-no_std = []
+std = []
+default = ["std", "glam"]
 
 [dependencies]
-nalgebra = "0.32"
+nalgebra = { version = "0.32", optional = true }
+glam = { version = "0.30", optional = true }
 
 [dev-dependencies]
 criterion = "0.5"

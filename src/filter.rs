@@ -1,23 +1,22 @@
 use crate::design::*;
 use crate::kernel::*;
-use nalgebra::{convert as _c, RealField as Real, Vector2 as Vec2};
-
+use crate::math::*;
 /// A single filter band.
 #[derive(Copy, Clone, Debug)]
-pub struct Filter<R: Real> {
-    kernel: Kernel<R>,
-    design: Design<R>,
-    sample_rate: R,
+pub struct Filter {
+    kernel: Kernel,
+    design: Design,
+    sample_rate: f32,
 }
 
-impl<R: Real + Copy> Filter<R> {
+impl Filter {
     /// Construct a new filter instance
-    pub fn new(sample_rate: R) -> Self {
+    pub fn new(sample_rate: f32) -> Self {
         let design = Design {
             curve: Curve::Peak,
-            gain: _c(0.0),
-            frequency: _c(0.1),
-            resonance: _c(1.0),
+            gain: 0.0,
+            frequency: 0.1,
+            resonance: 1.0,
         };
         let kernel = Kernel::new();
         let mut self_ = Self {
@@ -30,12 +29,12 @@ impl<R: Real + Copy> Filter<R> {
     }
 
     /// Get a copy of the filter's current design parameters.
-    pub fn get_design(&self) -> Design<R> {
+    pub fn get_design(&self) -> Design {
         self.design
     }
 
     /// Get a copy of the current filter state.
-    pub fn get_state(&self) -> Vec2<R> {
+    pub fn get_state(&self) -> Vec2 {
         self.kernel.s
     }
 
@@ -46,26 +45,26 @@ impl<R: Real + Copy> Filter<R> {
     }
 
     /// Set the critical frequency of the filter.
-    pub fn set_frequency(&mut self, freq_hz: R) {
+    pub fn set_frequency(&mut self, freq_hz: f32) {
         self.design.frequency = normalize_frequency(freq_hz, self.sample_rate);
         self.update();
     }
 
     /// set the gain of the filter. Meaningless for some filter curves.
     #[allow(non_snake_case)]
-    pub fn set_gain(&mut self, gain_dB: R) {
+    pub fn set_gain(&mut self, gain_dB: f32) {
         self.design.gain = gain_dB;
         self.update();
     }
 
     /// Set the resonance (aka "Q" factor) of the filter
-    pub fn set_resonance(&mut self, resonance: R) {
+    pub fn set_resonance(&mut self, resonance: f32) {
         self.design.resonance = resonance;
         self.update();
     }
 
     /// Change the sample rate of the filter. This will reset the filter state.
-    pub fn set_sample_rate(&mut self, sample_rate: R) {
+    pub fn set_sample_rate(&mut self, sample_rate: f32) {
         self.sample_rate = sample_rate;
         self.update();
     }
@@ -81,7 +80,7 @@ impl<R: Real + Copy> Filter<R> {
     }
 
     #[inline]
-    pub fn filter(&mut self, x: R) -> R {
+    pub fn filter(&mut self, x: f32) -> f32 {
         self.kernel.eval(x)
     }
 }
