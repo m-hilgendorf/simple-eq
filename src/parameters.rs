@@ -98,6 +98,16 @@ impl Parameters {
 
         (Vec3::new(num[0], num[1], num[2]), Vec3::new(den[0], den[1], den[2]))
     }
+
+    /// Compute the frequency response at a desired frequency.
+    pub fn eval(&self, normalized_frequency: f32) -> Complex {
+        debug_assert!(normalized_frequency >= 0.0 && normalized_frequency <= 1.0);
+        let (num, den) = self.digital_xfer_fn();
+        let z = Complex::new(0.0, normalized_frequency * PI);
+        let num = (z * z) * num[0] + z * num[1] + num[2];
+        let den = (z * z) * den[0] + z * den[1] * den[2];
+        num / den
+    }
 }
 
 /// Normalize a frequency in Hertz (1/s) to its discrete time equivalent (1/samples) given

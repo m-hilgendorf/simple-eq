@@ -1,11 +1,11 @@
-use crate::math::*;
 use crate::parameters::*;
 use crate::state::*;
+
 /// A single filter band.
 #[derive(Copy, Clone, Debug)]
 pub struct Filter {
-    kernel: State,
-    design: Parameters,
+    state: State,
+    parameters: Parameters,
     sample_rate: f32,
 }
 
@@ -20,8 +20,8 @@ impl Filter {
         };
         let kernel = State::new();
         let mut self_ = Self {
-            design,
-            kernel,
+            parameters: design,
+            state: kernel,
             sample_rate,
         };
         self_.update();
@@ -29,37 +29,37 @@ impl Filter {
     }
 
     /// Get a copy of the filter's current design parameters.
-    pub fn get_design(&self) -> Parameters {
-        self.design
+    pub fn parameters(&self) -> Parameters {
+        self.parameters
     }
 
     /// Get a copy of the current filter state.
-    pub fn get_state(&self) -> Vec2 {
-        self.kernel.s
+    pub fn state(&self) -> State {
+        self.state
     }
 
     /// Set the curve parameter (lowpass, highpass, bandpass, etc) of the filter.
     pub fn set_curve(&mut self, curve: Curve) {
-        self.design.curve = curve;
+        self.parameters.curve = curve;
         self.update();
     }
 
     /// Set the critical frequency of the filter.
     pub fn set_frequency(&mut self, freq_hz: f32) {
-        self.design.frequency = normalize_frequency(freq_hz, self.sample_rate);
+        self.parameters.frequency = normalize_frequency(freq_hz, self.sample_rate);
         self.update();
     }
 
     /// set the gain of the filter. Meaningless for some filter curves.
     #[allow(non_snake_case)]
     pub fn set_gain(&mut self, gain_dB: f32) {
-        self.design.gain = gain_dB;
+        self.parameters.gain = gain_dB;
         self.update();
     }
 
     /// Set the resonance (aka "Q" factor) of the filter
     pub fn set_resonance(&mut self, resonance: f32) {
-        self.design.resonance = resonance;
+        self.parameters.resonance = resonance;
         self.update();
     }
 
@@ -71,16 +71,16 @@ impl Filter {
 
     /// Zero the state of the filter.
     pub fn reset(&mut self) {
-        self.kernel.reset();
+        self.state.reset();
     }
 
     fn update(&mut self) {
-        let (num, den) = self.design.digital_xfer_fn();
-        self.kernel.set(num, den);
+        let (num, den) = self.parameters.digital_xfer_fn();
+        self.state.set(num, den);
     }
 
     #[inline]
     pub fn filter(&mut self, x: f32) -> f32 {
-        self.kernel.eval(x)
+        self.state.eval(x)
     }
 }
