@@ -1,5 +1,4 @@
 #![cfg_attr(not(feature = "std"), no_std)]
-
 //! A simple 32 band audio equalizer
 //!
 //! Usage:
@@ -26,10 +25,10 @@
 //! println!("h = {:?};", h);
 //!
 //! ```
-pub mod parameters;
 pub mod filter;
-pub mod state;
 pub mod math;
+pub mod parameters;
+pub mod state;
 
 const NUM_BANDS: usize = 32;
 use parameters::*;

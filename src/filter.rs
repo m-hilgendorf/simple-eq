@@ -1,6 +1,6 @@
+use crate::math::*;
 use crate::parameters::*;
 use crate::state::*;
-use crate::math::*;
 /// A single filter band.
 #[derive(Copy, Clone, Debug)]
 pub struct Filter {

@@ -1,7 +1,3 @@
-#![allow(clippy::just_underscores_and_digits)]
-//! Structures and methods for calculating filter coefficients from
-//! design parameters.
-//!
 use crate::math::*;
 use core::{convert::From, f32::consts::PI};
 
@@ -38,7 +34,6 @@ impl From<i32> for Curve {
         }
     }
 }
-
 
 impl Default for Parameters {
     fn default() -> Self {
