@@ -26,19 +26,19 @@
 //! println!("h = {:?};", h);
 //!
 //! ```
-pub mod design;
+pub mod parameters;
 pub mod filter;
-pub mod kernel;
+pub mod state;
 pub mod math;
 
 const NUM_BANDS: usize = 32;
-use design::*;
-use kernel::*;
+use parameters::*;
+use state::*;
 
 #[derive(Copy, Clone, Debug)]
 pub struct Equalizer {
-    design: [Design; NUM_BANDS],
-    kernel: [Kernel; NUM_BANDS],
+    design: [Parameters; NUM_BANDS],
+    kernel: [State; NUM_BANDS],
     bypass: [bool; NUM_BANDS],
     sample_rate: f32,
 }
@@ -47,8 +47,8 @@ impl Equalizer {
     /// Construct a new [Equalizer] instance
     pub fn new(sample_rate: f32) -> Self {
         Self {
-            design: [Design::default(); NUM_BANDS],
-            kernel: [Kernel::default(); NUM_BANDS],
+            design: [Parameters::default(); NUM_BANDS],
+            kernel: [State::default(); NUM_BANDS],
             bypass: [true; NUM_BANDS],
             sample_rate,
         }
@@ -56,7 +56,7 @@ impl Equalizer {
 
     #[inline]
     pub fn set(&mut self, idx: usize, curve: Curve, frequency: f32, resonance: f32, gain: f32) {
-        self.design[idx] = Design {
+        self.design[idx] = Parameters {
             frequency: normalize_frequency(frequency, self.sample_rate),
             gain,
             resonance,
@@ -134,7 +134,7 @@ impl Equalizer {
 
     /// Gets the design of a single band. Note that the frequency parameter is
     /// in the units of normalized frequency (1/samples).
-    pub fn get_design(&self, idx: usize) -> Design {
+    pub fn get_design(&self, idx: usize) -> Parameters {
         self.design[idx]
     }
 

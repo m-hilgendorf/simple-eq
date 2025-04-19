@@ -1,21 +1,16 @@
 //! Data structures and methods to do the actual filtering
-//!
-//! The approach taken here is a state-space model of the system evolution.
-
 use crate::math::*;
 
-/// A 2nd order filter "kernel" implemented as a state-space formulation. For reference on the derivation/description, check out
-/// [Raph Levien's excellent notebook](https://github.com/google/music-synthesizer-for-android/blob/master/lab/Second%20order%20sections%20in%20matrix%20form.ipynb)
 #[derive(Copy, Clone, Debug)]
 #[allow(non_snake_case)]
-pub struct Kernel {
+pub struct State {
     pub A: Mat2,
     pub B: Vec2,
     pub C: Vec3,
     pub s: Vec2,
 }
 
-impl Default for Kernel {
+impl Default for State {
     fn default() -> Self {
         Self {
             #[cfg(feature = "glam")]
@@ -29,7 +24,7 @@ impl Default for Kernel {
     }
 }
 
-impl Kernel {
+impl State {
     /// Constuct a new filter kernel. Default's to pass-through
     pub fn new() -> Self {
         Self::default()

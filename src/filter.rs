@@ -1,24 +1,24 @@
-use crate::design::*;
-use crate::kernel::*;
+use crate::parameters::*;
+use crate::state::*;
 use crate::math::*;
 /// A single filter band.
 #[derive(Copy, Clone, Debug)]
 pub struct Filter {
-    kernel: Kernel,
-    design: Design,
+    kernel: State,
+    design: Parameters,
     sample_rate: f32,
 }
 
 impl Filter {
     /// Construct a new filter instance
     pub fn new(sample_rate: f32) -> Self {
-        let design = Design {
+        let design = Parameters {
             curve: Curve::Peak,
             gain: 0.0,
             frequency: 0.1,
             resonance: 1.0,
         };
-        let kernel = Kernel::new();
+        let kernel = State::new();
         let mut self_ = Self {
             design,
             kernel,
@@ -29,7 +29,7 @@ impl Filter {
     }
 
     /// Get a copy of the filter's current design parameters.
-    pub fn get_design(&self) -> Design {
+    pub fn get_design(&self) -> Parameters {
         self.design
     }
 

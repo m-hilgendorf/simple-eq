@@ -6,6 +6,14 @@ use crate::math::*;
 use core::{convert::From, f32::consts::PI};
 
 #[derive(Copy, Clone, Debug)]
+pub struct Parameters {
+    pub curve: Curve,
+    pub frequency: f32,
+    pub resonance: f32,
+    pub gain: f32,
+}
+
+#[derive(Copy, Clone, Debug)]
 pub enum Curve {
     Lowpass,
     Highpass,
@@ -31,15 +39,8 @@ impl From<i32> for Curve {
     }
 }
 
-#[derive(Copy, Clone, Debug)]
-pub struct Design {
-    pub curve: Curve,
-    pub frequency: f32,
-    pub resonance: f32,
-    pub gain: f32,
-}
 
-impl Default for Design {
+impl Default for Parameters {
     fn default() -> Self {
         Self {
             curve: Curve::Peak,
@@ -50,7 +51,7 @@ impl Default for Design {
     }
 }
 
-impl Design {
+impl Parameters {
     /// Compute the dgital transfer function.
     pub fn digital_xfer_fn(&self) -> (Vec3, Vec3) {
         let (a_num, a_den) = self.analog_xfer_fn();
